@@ -1,0 +1,13 @@
+framework:
+    secret: S0ME_SECRET
+    validation:
+        enabled: true
+
+tactician:
+    method_inflector: command_inflector.property_onboarding.karibbu
+    commandbus:
+        default:
+            middleware:
+                - command_bus.logger_middleware.property_onboarding.karibbu
+                - tactician.middleware.validator
+                - tactician.middleware.command_handler

@@ -1,0 +1,54 @@
+{
+    "name": "rezzza/symfony-micro-edition",
+    "authors": [
+        {
+            "name": "ReZzZa Team",
+            "email": "dev@verylastroom.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": { "": "src/" },
+        "classmap": [ "app/AppKernel.php", "app/config/LoadValidationFile.php" ],
+        "exclude-from-classmap": ["**/Tests/", "**/Test/"]
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.0",
+        "symfony/symfony": "^3.0",
+        "ramsey/uuid": "^3.3",
+        "symfony/monolog-bundle": "^2.10",
+        "php-http/curl-client": "^1.4",
+        "guzzlehttp/psr7": "^1.2",
+        "php-http/message": "^1.2",
+        "pascaldevink/shortuuid": "^1.0",
+        "react/http": "^0.5@dev",
+        "league/tactician-bundle": "^0.4.1",
+        "league/tactician-logger": "^0.9.0"
+    },
+    "require-dev": {
+        "behat/behat": "^3.1",
+        "atoum/atoum": "^2.6",
+        "rezzza/rest-api-behat-extension": "dev-master",
+        "behat/symfony2-extension": "^2.1",
+        "rezzza/moco-behat-extension": "^1.0.0",
+        "guzzlehttp/guzzle": "^6.2",
+        "christiaan/stream-process": "~1.0.1",
+        "mkraemer/react-inotify": "dev-master",
+        "mkraemer/react-pcntl": "dev-master"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": {
+             "*": "dist"
+         }
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "./bin/console cache:clear",
+            "echo '[]' > var/moco/fixtures.json"
+        ],
+        "post-update-cmd": [
+            "./bin/console cache:clear"
+        ]
+    }
+}

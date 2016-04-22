@@ -1,0 +1,118 @@
+#!/usr/bin/env php
+<?php
+
+use React\EventLoop\Factory;
+use MKraemer\ReactInotify\Inotify;
+use Christiaan\StreamProcess\StreamProcess;
+use Symfony\Component\Finder\Finder;
+
+require __DIR__.'/../vendor/autoload.php';
+
+const RESTART_DELAY = 0.5;
+const ROOT_PATH = __DIR__.'/../';
+const SERVER_PATH = ROOT_PATH.'web/server';
+
+$loop = Factory::create();
+$inotify = new Inotify($loop);
+
+$log = function ($msg) {
+    echo date('[H:i:s]'), $msg;
+};
+
+$stop = function () use ($loop, $log, &$process) {
+    if ($process instanceof StreamProcess) {
+        $log("Stopping process... ");
+
+        $loop->removeReadStream($process->getReadStream());
+        $loop->removeReadStream($process->getErrorStream());
+
+        $process->terminate();
+        $process->close();
+
+        echo "done.\n";
+    }
+};
+
+$scanFilesToMonitor = function () use ($inotify) {
+    $flags = IN_CREATE | IN_DELETE | IN_MODIFY | IN_CLOSE_WRITE;
+    $finder = new Finder();
+    $finder
+        ->path(ROOT_PATH)
+        ->in('./app')
+        ->in('./src')
+        ->in('./features')
+        ->in('./tests')
+        ->directories()
+    ;
+
+    foreach ($finder as $directory) {
+        $inotify->add($directory->getPathName(), $flags);
+    }
+
+    $inotify->add(ROOT_PATH.'./', $flags);
+    $inotify->add(ROOT_PATH.'./app/', $flags);
+    $inotify->add(ROOT_PATH.'./src/', $flags);
+    $inotify->add(ROOT_PATH.'./features/', $flags);
+    $inotify->add(ROOT_PATH.'./tests/', $flags);
+};
+
+$start = function () use ($loop, $log, &$process, &$time) {
+    $log("Starting process... ");
+
+    $command = escapeshellarg(realpath(SERVER_PATH));
+    $process = new StreamProcess($command);
+
+    echo "done.\n";
+
+    $forward_logs = function ($stream) {
+        $data = fgets($stream);
+
+        if ($data == null) {
+            return;
+        }
+
+        echo $data."\n";
+    };
+
+    $loop->addReadStream($process->getReadStream(), $forward_logs);
+    $loop->addReadStream($process->getErrorStream(), $forward_logs);
+
+    if (isset($time) === false) {
+        $time = microtime(true);
+    }
+};
+
+$restart = function () use ($loop, $stop, $start, &$time, $scanFilesToMonitor, $inotify) {
+    $now = microtime(true);
+
+    if ($now <= $time) {
+        return;
+    }
+
+    $stop();
+    $scanFilesToMonitor($inotify);
+    $start();
+
+    $time = microtime(true) + RESTART_DELAY;
+};
+
+$exit = function () use ($loop, $stop) {
+    $stop();
+    $loop->stop();
+    exit;
+};
+
+// Begin monitoring:
+$scanFilesToMonitor();
+$inotify->on(IN_CLOSE_WRITE, $restart);
+$inotify->on(IN_DELETE, $restart);
+$inotify->on(IN_CREATE, $restart);
+$inotify->on(IN_MODIFY, $restart);
+
+// Wait for exit signal:
+$pcntl = new MKraemer\ReactPCNTL\PCNTL($loop);
+$pcntl->on(SIGTERM, $exit);
+$pcntl->on(SIGINT, $exit);
+
+$start();
+$loop->run();
