@@ -31,10 +31,12 @@
         "rezzza/rest-api-behat-extension": "dev-master",
         "behat/symfony2-extension": "^2.1",
         "rezzza/moco-behat-extension": "^1.0.0",
-        "guzzlehttp/guzzle": "^6.2",
-        "christiaan/stream-process": "~1.0.1",
-        "mkraemer/react-inotify": "dev-master",
-        "mkraemer/react-pcntl": "dev-master"
+        "guzzlehttp/guzzle": "^6.2"
+    },
+    "suggest": {
+        "christiaan/stream-process": "To use bin/monitor on local to help dev",
+        "mkraemer/react-inotify": "To use bin/monitor on local to help dev",
+        "mkraemer/react-pcntl": "To use bin/monitor on local to help dev"
     },
     "config": {
         "optimize-autoloader": true,
