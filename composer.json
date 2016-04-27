@@ -23,7 +23,8 @@
         "pascaldevink/shortuuid": "^1.0",
         "react/http": "^0.5@dev",
         "league/tactician-bundle": "^0.4.1",
-        "league/tactician-logger": "^0.9.0"
+        "league/tactician-logger": "^0.9.0",
+        "rezzza/symfony-rest-api-json": "dev-master"
     },
     "require-dev": {
         "behat/behat": "^3.1",

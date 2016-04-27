@@ -2,3 +2,4 @@ vendor/
 cache/
 logs/
 **/var/moco/
+composer.lock
