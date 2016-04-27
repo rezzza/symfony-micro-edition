@@ -16,6 +16,11 @@
         <service id="json_exception_handler.ui" class="Rezzza\SymfonyRestApiJson\JsonExceptionHandler">
             <argument>%kernel.debug%</argument>
             <argument>%show_exception_token%</argument>
+            <argument type="service">
+                <service class="Rezzza\SymfonyRestApiJson\ExceptionHttpCodeMap">
+                    <argument type="collection" />
+                </service>
+            </argument>
         </service>
 
         <service id="ui.event_listener.exception_listener" class="Symfony\Component\HttpKernel\EventListener\ExceptionListener">
