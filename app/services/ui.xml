@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="json_body_listener.ui" class="Rezzza\SymfonyRestApiJson\JsonBodyListener">
+            <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest" priority="100" />
+        </service>
+
+        <service id="link_request_listener.ui" class="Rezzza\SymfonyRestApiJson\LinkRequestListener">
+            <tag name="kernel.event_listener" event="kernel.request" method="onKernelRequest" priority="10" />
+        </service>
+
+        <service id="json_exception_handler.ui" class="Rezzza\SymfonyRestApiJson\JsonExceptionHandler">
+            <argument>%kernel.debug%</argument>
+            <argument>%show_exception_token%</argument>
+        </service>
+
+        <service id="ui.event_listener.exception_listener" class="Symfony\Component\HttpKernel\EventListener\ExceptionListener">
+            <tag name="kernel.event_subscriber" />
+            <tag name="monolog.logger" channel="request" />
+            <argument>json_exception_handler.ui:handleExceptionOfRequest</argument>
+            <argument type="service" id="logger" on-invalid="null" />
+        </service>
+    </services>
+</container>
