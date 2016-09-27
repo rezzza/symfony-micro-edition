@@ -1,4 +1,5 @@
 parameters:
+    exception_http_code_map: []
     show_exception_token: t0k3n
 
 framework:
@@ -11,5 +12,4 @@ tactician:
         default:
             middleware:
                 - logger_middleware.command_bus
-                - tactician.middleware.validator
                 - tactician.middleware.command_handler

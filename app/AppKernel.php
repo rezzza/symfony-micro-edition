@@ -32,9 +32,6 @@ class AppKernel extends Kernel
 
     protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
     {
-        $c->addCompilerPass(new LoadValidationFile([
-            '/config/validation.yml'
-        ]));
         $loader->load(__DIR__.'/services/');
         $loader->load(__DIR__.'/config/config.yml');
     }
