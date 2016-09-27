@@ -8,7 +8,7 @@
     ],
     "autoload": {
         "psr-4": { "": "src/" },
-        "classmap": [ "app/AppKernel.php", "app/config/LoadValidationFile.php" ],
+        "classmap": [ "app/AppKernel.php" ],
         "exclude-from-classmap": ["**/Tests/", "**/Test/"]
     },
     "minimum-stability": "stable",
