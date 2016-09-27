@@ -1,45 +1,11 @@
 #!/usr/bin/env php
 <?php
+require __DIR__.'/../app/autoload.php';
 
-require __DIR__.'/../vendor/autoload.php';
-
-$kernel = new AppKernel(getenv('SYMFONY_ENV'), (getenv('SYMFONY_DEBUG') !== '0'));
-
-$callback = function ($request, $response) use ($kernel) {
-    $method = $request->getMethod();
-    $headers = $request->getHeaders();
-    $query = $request->getQuery();
-    $content = $request->getBody();
-    $post = array();
-    if (in_array(strtoupper($method), array('POST', 'PUT', 'DELETE', 'PATCH')) &&
-        isset($headers['Content-Type']) && (0 === strpos($headers['Content-Type'], 'application/x-www-form-urlencoded'))
-    ) {
-        parse_str($content, $post);
-    }
-    $sfRequest = new Symfony\Component\HttpFoundation\Request(
-        $query,
-        $post,
-        array(),
-        array(), // A rest api is cookieless ;)
-        $request->getFiles(),
-        array(), // Server is partially filled a few lines below
-        $content
-    );
-    $sfRequest->setMethod($method);
-    $sfRequest->headers->replace($headers);
-    $sfRequest->server->set('REQUEST_URI', $request->getPath());
-    if (isset($headers['Host'])) {
-        $sfRequest->server->set('SERVER_NAME', explode(':', $headers['Host'])[0]);
-    }
-    $sfResponse = $kernel->handle($sfRequest);
-
-    $response->writeHead(
-        $sfResponse->getStatusCode(),
-        $sfResponse->headers->all()
-    );
-    $response->end($sfResponse->getContent());
-    $kernel->terminate($sfRequest, $sfResponse);
-};
+use Icicle\Http\Message\{BasicResponse, Request, Response};
+use Icicle\Http\Server\{RequestHandler, Server};
+use Icicle\Socket\Socket;
+use Icicle\Loop;
 
 //necessary, since connections will be dropped without reasons after several hundred connections.
 gc_disable();
@@ -49,10 +15,59 @@ ini_set('output_buffering', 0);
 ini_set('implicit_flush', 1);
 ob_implicit_flush(1);
 
-$loop = React\EventLoop\Factory::create();
-$socket = new React\Socket\Server($loop);
-$http = new React\Http\Server($socket);
+$kernel = new AppKernel(getenv('SYMFONY_ENV'), (getenv('SYMFONY_DEBUG') !== '0'));
 
-$http->on('request', $callback);
-$socket->listen(getenv('LISTEN'), '0.0.0.0');
-$loop->run();
+class SymfonyServer implements RequestHandler
+{
+    private $kernel;
+
+    public function __construct($kernel)
+    {
+        $this->kernel = $kernel;
+    }
+
+    public function onRequest(Request $request, Socket $socket)
+    {
+        $uri = $request->getRequestTarget();
+        $query = $uri->getQueryValues();
+        $body = $request->getBody();
+        $content = $body->isReadable() ? yield $body->read() : null;
+
+        $sfRequest = new Symfony\Component\HttpFoundation\Request(
+            $query, // GET params
+            [], // POST params
+            [], //  request attributes (parameters parsed from the PATH_INFO, ...)
+            [], // A rest api is cookieless ;)
+            [], // TODO $request->getFiles(), // file params
+            [], // Server is partially filled a few lines below
+            $content
+        );
+        $sfRequest->setMethod($request->getMethod());
+        $headers = $request->getHeaders();
+        $sfRequest->headers->replace($headers);
+        $sfRequest->server->set('REQUEST_URI', $uri->getPath());
+        if (isset($headers['Host'])) {
+            $sfRequest->server->set('SERVER_NAME', $headers['Host'][0]);
+        }
+
+        $sfResponse = $this->kernel->handle($sfRequest);
+        $response = new BasicResponse(
+            $sfResponse->getStatusCode(),
+            $sfResponse->headers->all()
+        );
+
+        yield from $response->getBody()->end($sfResponse->getContent());
+
+        yield $response;
+        $this->kernel->terminate($sfRequest, $sfResponse);
+    }
+
+    public function onError($code, Socket $socket)
+    {
+        yield new BasicResponse($code);
+    }
+}
+
+$server = new Server(new SymfonyServer($kernel));
+$server->listen(getenv('LISTEN'), '0.0.0.0');
+Loop\run();

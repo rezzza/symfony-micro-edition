@@ -21,15 +21,15 @@
         "guzzlehttp/psr7": "^1.2",
         "php-http/message": "^1.2",
         "pascaldevink/shortuuid": "^1.0",
-        "react/http": "^0.5@dev",
+        "icicleio/http": "^0.3",
         "league/tactician-bundle": "^0.4.1",
         "league/tactician-logger": "^0.9.0",
-        "rezzza/symfony-rest-api-json": "dev-master"
+        "rezzza/symfony-rest-api-json": "^1.0"
     },
     "require-dev": {
         "behat/behat": "^3.1",
         "atoum/atoum": "^2.6",
-        "rezzza/rest-api-behat-extension": "dev-master",
+        "rezzza/rest-api-behat-extension": "^5.0",
         "behat/symfony2-extension": "^2.1",
         "rezzza/moco-behat-extension": "^1.0.0",
         "guzzlehttp/guzzle": "^6.2"
